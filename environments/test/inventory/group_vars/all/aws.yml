@@ -1,0 +1,181 @@
+aws_region_us_west_2:
+  name: us-west-2
+  zone:
+    a: us-west-2a
+    b: us-west-2b
+    v: us-west-2c
+
+aws_image_debian_stretch: ami-0574f98a32ba41dd7
+
+aws_vpc_nets:
+  - name: demo_net
+    cidr_block: 172.16.0.0/22
+    region: "{{ aws_region_us_west_2.name }}"
+
+aws_subnets:
+  - state: present
+    vpc_name: demo_net
+    cidr: 172.16.0.0/25
+    az: "{{ aws_region_us_west_2.zone.a }}"
+    resource_tags:
+      Name: subnet_lb_a
+  - state: present
+    vpc_name: demo_net
+    cidr: 172.16.0.128/25
+    az: "{{ aws_region_us_west_2.zone.b }}"
+    resource_tags:
+      Name: subnet_lb_b
+  - state: present
+    vpc_name: demo_net
+    cidr: 172.16.1.0/25
+    az: "{{ aws_region_us_west_2.zone.a }}"
+    resource_tags:
+      Name: subnet_wb_a
+  - state: present
+    vpc_name: demo_net
+    cidr: 172.16.1.128/25
+    az: "{{ aws_region_us_west_2.zone.b }}"
+    resource_tags:
+      Name: subnet_wb_b
+  - state: present
+    vpc_name: demo_net
+    cidr: 172.16.2.0/25
+    az: "{{ aws_region_us_west_2.zone.a }}"
+    resource_tags:
+      Name: subnet_db_a
+  - state: present
+    vpc_name: demo_net
+    cidr: 172.16.2.128/25
+    az: "{{ aws_region_us_west_2.zone.b }}"
+    resource_tags:
+      Name: subnet_db_b
+
+aws_security_groups:
+  - name: lb
+    description: Loadbalancing group
+    vpc_name: demo_net
+    region: "{{ aws_region_us_west_2.name }}"
+    rules:
+      - proto: all
+        group_name: lb
+      - proto: tcp
+        ports:
+        - 22
+        - 80
+        - 443
+        cidr_ip: 0.0.0.0/0
+  - name: wb
+    description: Web group
+    vpc_name: demo_net
+    region: "{{ aws_region_us_west_2.name }}"
+    rules:
+      - proto: all
+        group_name: wb
+      - proto: tcp
+        ports:
+        - 22
+        cidr_ip: 0.0.0.0/0
+  - name: db
+    description: Database group
+    vpc_name: demo_net
+    region: "{{ aws_region_us_west_2.name }}"
+    rules:
+      - proto: all
+        group_name: db
+      - proto: tcp
+        ports:
+        - 22
+        cidr_ip: 0.0.0.0/0
+
+aws_key:
+  name: key_demo
+  region: "{{ aws_region_us_west_2.name }}"
+
+aws_rds_subnets:
+  - subnet_db_a
+  - subnet_db_b
+
+aws_rds_subnet_group: "rds_{{ app_name }}_sng"
+
+aws_rds:
+  command: create
+  instance_name: "{{ db_name }}"
+  db_engine: MySQL
+  size: 10
+  instance_type: db.t2.micro
+  username: "{{ users.mysql.name }}"
+  password: "{{ users.mysql.pass }}"
+  multi_zone: yes
+  vpc_security_group_name: db
+  tags:
+    Environment: "{{ env }}"
+    Application: "{{ app_name }}"
+
+aws_eip_role_name: aws_eip_role
+
+aws_vm_state: present
+
+# aws_vms: "{{ aws_vms_lb }} + {{ aws_vms_wb }} + {{ aws_vms_db }}"
+aws_vms: "{{ aws_vms_lb }} + {{ aws_vms_wb }}"
+
+aws_vms_lb:
+  - key_name: "{{ aws_key.name }}"
+    id: aa05b4a3c2cd7669f09
+    state: "{{ aws_vm_state }}"
+    instance_type: t2.micro
+    instance_profile_name: "{{ aws_eip_role_name }}"
+    instance_tags:
+      Name: lb-master
+      roles: lb, master, haproxy, letsencrypt
+    group:
+      - lb
+      - wb
+    image: "{{ aws_image_debian_stretch }}"
+    vpc_subnet_name: subnet_lb_a
+    assign_public_ip: yes
+    wait: yes
+  - key_name: "{{ aws_key.name }}"
+    id: aa05b4a3c2cd7669f10
+    state: "{{ aws_vm_state }}"
+    instance_type: t2.micro
+    instance_profile_name: "{{ aws_eip_role_name }}"
+    instance_tags:
+      Name: lb-backup
+      roles: lb, backup, haproxy, letsencrypt
+    group:
+      - lb
+      - wb
+    image: "{{ aws_image_debian_stretch }}"
+    vpc_subnet_name: subnet_lb_b
+    assign_public_ip: yes
+    wait: yes
+
+aws_vms_wb:
+  - key_name: "{{ aws_key.name }}"
+    id: aa05b4a3c2cd7619f22
+    state: "{{ aws_vm_state }}"
+    instance_type: t2.micro
+    instance_tags:
+      Name: wb-master
+      roles: wb, master, nodejs
+    group:
+      - wb
+      - db
+    image: "{{ aws_image_debian_stretch }}"
+    vpc_subnet_name: subnet_wb_a
+    assign_public_ip: yes
+    wait: yes
+  - key_name: "{{ aws_key.name }}"
+    id: aa05b4a3c2cd7619f23
+    state: "{{ aws_vm_state }}"
+    instance_type: t2.micro
+    instance_tags:
+      Name: wb-backup
+      roles: wb, backup, nodejs
+    group:
+      - wb
+      - db
+    image: "{{ aws_image_debian_stretch }}"
+    vpc_subnet_name: subnet_wb_b
+    assign_public_ip: yes
+    wait: yes

@@ -1,0 +1,11 @@
+install_keepalived: true
+
+keepalived_main_router: lb-master
+keepalived_backup_router: lb-backup
+keepalived_main_priority: 100
+keepalived_backup_priority: 99
+keepalived_main_unicast_src_ip: "{{ hostvars['lb-master'].ec2_private_ip_address }}"
+keepalived_backup_unicast_src_ip: "{{ hostvars['lb-backup'].ec2_private_ip_address }}"
+
+keepalived_notify_src: "{{ env_dir }}/files/keepalived/notify-haproxy.sh"
+keepalived_notify_master_src: "{{ env_dir }}/files/keepalived/notify-master.sh"

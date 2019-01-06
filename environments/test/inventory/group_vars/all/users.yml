@@ -1,0 +1,10 @@
+demo_pass: password
+demo_user: user
+
+users:
+  haproxy:
+    name: haproxy
+    pass: "{{ demo_pass }}"
+  mysql:
+    name: "{{ demo_user }}"
+    pass: "{{ demo_pass }}"

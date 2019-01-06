@@ -1,0 +1,61 @@
+- name: set an elastic IP if none provided
+  when: aws_public_eip is not defined
+  block:
+  - name: check EIPs
+    ec2_eip_facts:
+      aws_access_key: "{{ aws_access_key  | default(omit) }}"
+      aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
+      region: "{{ aws_vpc_nets | map(attribute='region') | first | default(aws_region) }}"
+    register: aws_ec2_eips_facts
+
+  - ec2_instance_facts:
+      aws_access_key: "{{ aws_access_key  | default(omit) }}"
+      aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
+      region: "{{ aws_vpc_nets | map(attribute='region') | first | default(aws_region) }}"
+    register: aws_ec2_instance_facts
+
+  - name: check if lb VMs have associated elastic IP
+    block:
+      - name: Check if elastic IP is associated with any LB VMs
+        vars:
+          aws_lb_vms: "{{ aws_ec2_instance_facts.instances | selectattr('tags.Name', 'match','lb-.*') | map(attribute='instance_id') | list }}"
+        with_items: "{{ aws_ec2_eips_facts.addresses }}"
+        when: item.association_id is defined and item.instance_id in aws_lb_vms
+        set_fact:
+          aws_public_eip: "{{ item.public_ip }}"
+
+  - name: check if there are unallocated addresses
+    when: aws_public_eip is not defined
+    block:
+    - name: save unallocated addresses
+      with_items: "{{ aws_ec2_eips_facts.addresses }}"
+      when: item.association_id is not defined
+      set_fact:
+        aws_unallocated_eips_map: "{{ aws_unallocated_eips_map | default({}) | combine( { item.allocation_id: item.public_ip } ) }}"
+
+    - when: aws_unallocated_eips_map is defined
+      set_fact:
+        temp_public_eip: "{{ aws_unallocated_eips_map.values() | first  }}"
+
+    - name: allocate elastic IP
+      vars:
+        lb_master_token: "{{ aws_vms | selectattr('instance_tags.Name', 'match','lb-master') | map(attribute='id') | first }}"
+        lb_master_id: "{{ aws_ec2_instance_facts.instances | selectattr('client_token', 'match', lb_master_token) | map(attribute='instance_id') | first  }}"
+      ec2_eip:
+        aws_access_key: "{{ aws_access_key  | default(omit) }}"
+        aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
+        region: "{{ aws_vpc_nets | map(attribute='region') | first | default(aws_region) }}"
+        device_id: "{{ lb_master_id }}"
+        public_ip: "{{ temp_public_eip | default(omit) }}"
+      register: aws_new_public_eip
+
+    - set_fact:
+        aws_public_eip: "{{ aws_new_public_eip.public_ip  }}"
+
+- name: refresh EC2 inventory
+  when: aws_new_public_eip is defined and aws_new_public_eip is changed
+  shell: "rm -f ~/.ansible/tmp/ansible-ec2*"
+  no_log: true
+
+- name: Refresh inventory
+  meta: refresh_inventory

@@ -1,0 +1,9 @@
+HTTP/1.0 403 Forbidden
+Cache-Control: no-cache
+Connection: close
+Content-Type: text/html; charset=utf-8
+
+<html><body><h1>Error 403: acceso denegado/prohíbido</h1>
+Acceso denegado/prohibido.
+</body></html>
+

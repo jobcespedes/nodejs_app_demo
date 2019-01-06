@@ -1,0 +1,21 @@
+- name: install haproxy
+  package:
+    name: haproxy
+    state: present
+
+- name: install self-signed cert
+  package:
+    name: ssl-cert
+    state: present
+  notify: reload haproxy
+
+- name:
+  shell: cat /etc/ssl/certs/ssl-cert-snakeoil.pem /etc/ssl/private/ssl-cert-snakeoil.key > /etc/ssl/certs/haproxy.pem
+  args:
+    creates: "/etc/ssl/certs/haproxy.pem"
+
+- name: Set service state for haproxy
+  service:
+    name: haproxy
+    enabled: "{{ haproxy_service.enabled }}"
+    state: "{{ haproxy_service.state }}"

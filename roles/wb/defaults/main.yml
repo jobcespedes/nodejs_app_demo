@@ -1,0 +1,31 @@
+---
+# defaults file for wb
+nodejs_version: 6
+
+app_init_js: app.js
+
+wb_nodejs_install_cmd: "curl https://raw.githubusercontent.com/creationix/nvm/v0.7.0/install.sh | sh"
+
+wb_pckgs:
+  - git
+
+app_name: demo
+
+app:
+  name: "{{ app_name }}"
+  config_path: /var/www/html/mv/config.php
+  # dbhost: "{{ db_floating_ip }}"
+  # dbname: "{{ postgres_dbs.mediacion.name }}"
+  # dbuser: "{{ users.postgres.apps.mediacion.name }}"
+  # dbpass: "{{ users.postgres.apps.mediacion.pass }}"
+  git:
+    repo: https://github.com/jobcespedes/application.git
+    dest: /var/www/html/demo
+    depth: 1
+    version: master
+    force: yes
+
+app_stop: false
+app_start: false
+app_update: false
+app_restart: false

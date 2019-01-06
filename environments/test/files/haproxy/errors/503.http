@@ -1,0 +1,40 @@
+HTTP/1.0 503 Service Unavailable
+Cache-Control: no-cache
+Connection: close
+Content-Type: text/html
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mediación Virtual no disponible | Universidad de Costa Rica</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.rawgit.com/daneden/animate.css/master/animate.css" rel="stylesheet">
+    <style>
+@import url(http://fonts.googleapis.com/css?family=Roboto:400,700,900);body{font-family:'Roboto',sans-serif;text-align:center;margin-top:100px;background-image:url(https://googledrive.com/host/0BzSHKQRwrebsRU1zVU9VaVZGZjQ);background-attachment:fixed}.centroabsoluto{display:table-cell;vertical-align:middle}img{padding:0;margin:0}h1{font-size:50px;line-height:30px;text-align:center;animation-duration:3s;animation-delay:.5s}h2{font-size:20px;letter-spacing:10px;padding-bottom:20px;text-align:center;text-transform:uppercase;animation-duration:2s;animation-delay:1.2s;padding-top:0;margin-top:0}.btmv1{max-width:450px;margin-top:10px;width:100%;vertical-align:middle;padding:20px 0;animation-duration:5s;animation-delay:2s}.btmv2{max-width:450px;margin-top:10px;width:100%;vertical-align:middle;padding:20px 0;animation-duration:5s;animation-delay:3s}.modal-content{-webkit-box-shadow:none;box-shadow:none;background:transparent;border:0;outline:none}.modal-content iframe{border:0;padding:0;margin:0}.close{font-size:80px;margin:-20px 0 0 0}@media only screen and (max-width:641px){.modal-body{height:100px;padding:0;margin:0}.modal-content{padding:0;margin:0}.modal-dialog{position:relative;width:auto;margin:15px}.close{margin:-12px 0 0 0}}@media only screen and (min-width:768px){.close{font-size:80px;margin:30px -43px -20px 100px}}
+    </style>
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+          <h1 class="animated fadeInUp"><img src="https://googledrive.com/host/0BzSHKQRwrebsaV9NbmpId1lHbDg" alt="Mediación Virtual" /></h1>
+          <h2 class="animated zoomIn">Lo sentimos, ha habido una dificultad técnica.</br></br>Pronto estaremos de vuelta.</h2>
+       <a class="animated fadeInLeft primero btmv1 btn btn-primary btn-lg" data-toggle="modal" data-target=".bs-example-modal-lg"role="button">Dar un tour por la nueva plataforma</a><br />
+          <!-- Large modal -->
+<div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="ModalLargo" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+     <div class="embed-responsive embed-responsive-16by9">
+         <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/VsiWaa8-WV0?rel=0&amp;controls=1&amp;showinfo=0" frameborder="0" allowfullscreen></iframe></div>
+    </div>
+  </div>
+</div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+haproxy_service:
+  enabled: true
+  state: started
+
+stats_auth_user: "{{ users.haproxy.name }}"
+stats_auth_pass: "{{ users.haproxy.pass }}"

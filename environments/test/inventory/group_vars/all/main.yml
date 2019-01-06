@@ -1,0 +1,5 @@
+env: test
+env_dir: "{{ lookup('env', 'PWD') }}/environments/{{ env }}"
+env_artifacts: "{{ env_dir }}/.artifacts"
+
+app_name: "demo"

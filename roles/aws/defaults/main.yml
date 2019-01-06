@@ -1,0 +1,27 @@
+---
+# defaults file for aws
+aws_region: us-west-2
+aws_vm_state: running
+
+aws_eip_role_name: aws_eip_role
+
+aws_eip_role:
+  iam_type: role
+  name: "{{ aws_eip_role_name }}"
+  state: present
+  trust_policy:
+    Version: '2012-10-17'
+    Statement:
+    - Action: sts:AssumeRole
+      Effect: Allow
+      Principal:
+        Service: ec2.amazonaws.com
+  policy:
+    iam_type: role
+    iam_name: "{{ aws_eip_role_name }}"
+    policy_name: "{{ aws_eip_role_name }}_policy"
+    state: present
+    policy_json: " {{ lookup( 'file', 'eip_policy.json') }} "
+
+aws_iam:
+  - "{{ aws_eip_role }}"

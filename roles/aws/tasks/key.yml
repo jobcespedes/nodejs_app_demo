@@ -1,0 +1,17 @@
+- when: aws_key is defined
+  block:
+  - name: "Ensure that {{ env_artifacts }}/.ssh exists"
+    file:
+      path: "{{ env_artifacts }}/.ssh"
+      state: directory
+
+  - name: Write public SSH key
+    shell: "ssh-keygen -q -t rsa -f '{{ env_artifacts }}/.ssh/id_rsa' -C '' -N ''"
+    args:
+      creates: "{{ env_artifacts }}/.ssh/id_rsa"
+
+  - name: "Create AWS Key pair"
+    ec2_key:
+      name: "{{ aws_key.name }}"
+      key_material: "{{ lookup('file', env_artifacts + '/.ssh/id_rsa.pub' ) }}"
+      region: "{{ aws_key.region }}"

@@ -1,0 +1,91 @@
+- name: Create VPC
+  with_items: "{{ aws_vpc_nets }}"
+  when: aws_vpc_nets is defined
+  ec2_vpc_net:
+    aws_access_key: "{{ item.aws_access_key if item.aws_access_key is defined else ( aws_access_key  | default(omit)) }}"
+    aws_secret_key: "{{ item.aws_secret_key if item.aws_secret_key is defined else ( aws_secret_key  | default(omit)) }}"
+    region: "{{ item.region if item.region is defined else ( aws_region  | default(omit)) }}"
+    name: "{{ item.name | default(omit) }}"
+    cidr_block: "{{ item.cidr_block | default(omit) }}"
+    tags: "{{ item.tags | default(omit) }}"
+    tenancy: "{{ item.tenancy | default(omit) }}"
+  register: vpc_net_facts
+
+- name: Save VPC ids
+  with_items: "{{ vpc_net_facts.results }}"
+  set_fact:
+    vpc_net_ids: "{{ vpc_net_ids | default({}) | combine( { item.vpc.tags.Name: item.vpc.id } ) }}"
+  no_log: true
+
+- name: Create internet gateways
+  with_items: "{{ aws_vpc_nets }}"
+  when: aws_vpc_nets is defined
+  ec2_vpc_igw:
+    aws_access_key: "{{ item.aws_access_key if item.aws_access_key is defined else ( aws_access_key  | default(omit)) }}"
+    aws_secret_key: "{{ item.aws_secret_key if item.aws_secret_key is defined else ( aws_secret_key  | default(omit)) }}"
+    region: "{{ item.region if item.region is defined else ( aws_region  | default(omit)) }}"
+    vpc_id: "{{ vpc_net_ids[item.name] }}"
+  register: vpc_vpc_igw_facts
+
+- name: Save internet gateways ids
+  with_items: "{{ vpc_vpc_igw_facts.results }}"
+  set_fact:
+    vpc_vpc_igw_ids: "{{ vpc_vpc_igw_ids | default({}) | combine( { item.item.name: item.gateway_id } ) }}"
+  no_log: true
+
+- name: Lookup routing tables
+  with_items: "{{ aws_vpc_nets }}"
+  ec2_vpc_route_table_facts:
+    aws_access_key: "{{ item.aws_access_key if item.aws_access_key is defined else ( aws_access_key  | default(omit)) }}"
+    aws_secret_key: "{{ item.aws_secret_key if item.aws_secret_key is defined else ( aws_secret_key  | default(omit)) }}"
+    region: "{{ item.region if item.region is defined else ( aws_region  | default(omit)) }}"
+    filters:
+      vpc-id: "{{ vpc_net_ids[item.name] }}"
+  no_log: true
+  register: vpc_route_tables_facts
+
+- name: Setup route tables
+  with_items: "{{ aws_vpc_nets }}"
+  ec2_vpc_route_table:
+    aws_access_key: "{{ item.aws_access_key if item.aws_access_key is defined else ( aws_access_key  | default(omit)) }}"
+    aws_secret_key: "{{ item.aws_secret_key if item.aws_secret_key is defined else ( aws_secret_key  | default(omit)) }}"
+    region: "{{ item.region if item.region is defined else ( aws_region  | default(omit)) }}"
+    vpc_id: "{{ vpc_net_ids[item.name] }}"
+    lookup: id
+    purge_subnets: false
+    route_table_id: "{{ vpc_route_tables_facts.results | map(attribute='route_tables') | first | selectattr('vpc_id', 'match', vpc_net_ids[item.name] ) | map(attribute='id') | first }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ vpc_vpc_igw_facts.results |  selectattr('vpc_id', 'match', vpc_net_ids[item.name] ) | map(attribute='gateway_id') | first }}"
+
+- name: Create EC2 security groups
+  with_items: "{{ aws_security_groups }}"
+  when: aws_security_groups is defined
+  ec2_group:
+    aws_access_key: "{{ item.aws_access_key if item.aws_access_key is defined else ( aws_access_key  | default(omit)) }}"
+    aws_secret_key: "{{ item.aws_secret_key if item.aws_secret_key is defined else ( aws_secret_key  | default(omit)) }}"
+    region: "{{ item.region if item.region is defined else ( aws_region  | default(omit)) }}"
+    name: "{{ item.name | default(omit) }}"
+    description: "{{ item.description | default(omit) }}"
+    vpc_id: "{{ vpc_net_ids[item.vpc_name] if item.vpc_name is defined else (item.vpc_id|default(omit)) }}"
+    rules: "{{ item.rules | default(omit) }}"
+
+- name: Create subnets
+  with_items: "{{ aws_subnets }}"
+  when: aws_subnets is defined
+  ec2_vpc_subnet:
+    aws_access_key: "{{ item.aws_access_key if item.aws_access_key is defined else ( aws_access_key  | default(omit)) }}"
+    aws_secret_key: "{{ item.aws_secret_key if item.aws_secret_key is defined else ( aws_secret_key  | default(omit)) }}"
+    region: "{{ item.region if item.region is defined else ( aws_region  | default(omit)) }}"
+    state: "{{ item.state | default(omit) }}"
+    vpc_id: "{{ vpc_net_ids[item.vpc_name] if item.vpc_name is defined else (item.vpc_id|default(omit)) }}"
+    cidr: "{{ item.cidr | default(omit) }}"
+    resource_tags: "{{ item.resource_tags | default(omit) }}"
+    az: "{{ item.az | default(omit) }}"
+  register: aws_subnets_facts
+
+- name: Save subnets ids
+  with_items: "{{ aws_subnets_facts.results }}"
+  set_fact:
+    vpc_subnet_ids: "{{ vpc_subnet_ids | default({}) | combine( { item.subnet.tags.Name: item.subnet.id } ) }}"
+  no_log: true

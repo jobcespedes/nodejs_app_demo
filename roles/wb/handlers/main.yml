@@ -1,0 +1,27 @@
+---
+# handlers file for wb
+- name: stop app
+  shell: "pm2 stop {{ app.name }}"
+  args:
+    chdir: "{{ app.git.dest }}"
+  ignore_errors: yes
+  listen:
+    - stop app
+    - restart app
+    - update app
+
+- name: update app
+  shell: "npm run-script db-update"
+  args:
+    chdir: "{{ app.git.dest }}"
+  listen:
+    - update app
+
+- name: start app
+  shell: "pm2 start npm --name {{ app.name }} -- start"
+  args:
+    chdir: "{{ app.git.dest }}"
+  listen:
+    - start app
+    - restart app
+    - update app

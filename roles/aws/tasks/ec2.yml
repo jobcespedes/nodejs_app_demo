@@ -1,0 +1,54 @@
+- name: get subnets ids
+  when: vpc_subnet_ids is not defined
+  block:
+  - name: Subnets facts
+    when: aws_subnets is defined
+    ec2_vpc_subnet_facts:
+      aws_access_key: "{{ aws_access_key  | default(omit) }}"
+      aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
+      region: "{{ aws_vpc_nets | map(attribute='region') | first | default(aws_region) }}"
+    register: ec2_subnets_facts
+
+  - name: Save subnets ids
+    with_items: "{{ ec2_subnets_facts.subnets }}"
+    when: item.tags.Name is defined
+    set_fact:
+      ec2_vpc_subnet_ids: "{{ ec2_vpc_subnet_ids | default({}) | combine( { item.tags.Name: item.id } ) }}"
+    no_log: true
+
+  - set_fact:
+      vpc_subnet_ids: "{{ ec2_vpc_subnet_ids }}"
+    no_log: true
+
+- name: "Build EC2 instance"
+  with_items: "{{ aws_vms }}"
+  loop_control:
+    loop_var: aws_vm
+  ec2:
+    aws_access_key: "{{ aws_vm.aws_access_key if aws_vm.aws_access_key is defined else ( aws_access_key  | default(omit)) }}"
+    aws_secret_key: "{{ aws_vm.aws_secret_key if aws_vm.aws_secret_key is defined else ( aws_secret_key  | default(omit)) }}"
+    region: "{{ aws_vm.region if aws_vm.region is defined else ( aws_region  | default(omit)) }}"
+    key_name: "{{ aws_vm.key_name | default(omit) }}"
+    instance_type: "{{ aws_vm.instance_type | default(omit) }}"
+    instance_tags: "{{ aws_vm.instance_tags | default(omit) }}"
+    id: "{{ aws_vm.id | default(omit) }}"
+    state: "{{ aws_vm.state | default(omit) }}"
+    image: "{{ aws_vm.image | default(omit) }}"
+    wait: "{{ aws_vm.wait | default(omit) }}"
+    group: "{{ aws_vm.group | default(omit) }}"
+    count: "{{ aws_vm.count | default(omit) }}"
+    instance_profile_name: "{{ aws_vm.instance_profile_name | default(omit) }}"
+    vpc_subnet_id: "{{ vpc_subnet_ids[aws_vm.vpc_subnet_name] if aws_vm.vpc_subnet_name is defined else (aws_vm.vpc_subnet_id|default(omit)) }}"
+    private_ip: "{{ aws_vm.private_ip | default(omit) }}"
+    assign_public_ip: "{{ aws_vm.assign_public_ip | default(omit) }}"
+    volumes: "{{ aws_vm.volumes | default(omit) }}"
+    zone: "{{ aws_vm.zone | default(omit) }}"
+  register: aws_ec2_build
+
+- name: refresh EC2 inventory
+  when: aws_ec2_build is changed
+  shell: "rm -f ~/.ansible/tmp/ansible-ec2*"
+  no_log: true
+
+- name: Refresh inventory
+  meta: refresh_inventory

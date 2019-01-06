@@ -1,0 +1,11 @@
+- name: install pm2
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present
+
+- name: install packages based on package.json
+  npm:
+    path: "{{ app.git.dest }}"
+  notify: restart app

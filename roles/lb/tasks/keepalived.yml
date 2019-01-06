@@ -1,0 +1,52 @@
+- name: install keepalived
+  package:
+    name: keepalived
+    state: present
+
+# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=878241
+- name: install libipset3
+  package:
+    name: libipset3
+    state: present
+
+- name: set keepalived role
+  copy:
+    content: |
+      # Options to pass to keepalived
+
+      # DAEMON_ARGS are appended to the keepalived command-line
+      DAEMON_ARGS="-i {{ keepalived_role }}"
+    dest: "{{ keepalived_service_opts_file_path }}"
+
+- name: Copy haproxy handler for keepalived
+  when: keepalived_notify_src is defined
+  copy:
+    src: "{{ keepalived_notify_src }}"
+    dest: "{{ keepalived_notify_dest }}"
+    owner: root
+    group: root
+    mode: 0774
+
+- name: Copy master handler for keepalived
+  when: keepalived_notify_master_src is defined
+  copy:
+    src: "{{ keepalived_notify_master_src }}"
+    dest: "{{ keepalived_notify_master_dest }}"
+    owner: root
+    group: root
+    mode: 0774
+
+- name: config file for keepalived
+  template:
+    src: "{{ keepalived_cfg_src }}"
+    dest: "{{ keepalived_cfg_dst }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify: reload keepalived
+
+- name: Set service state for keepalived
+  service:
+    name: keepalived
+    enabled: true
+    state: started

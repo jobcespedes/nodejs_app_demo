@@ -1,0 +1,2 @@
+keepalived_role: main
+keepalived_unicast_peer: "{{ keepalived_backup_unicast_src_ip }}"

@@ -1,0 +1,13 @@
+---
+# tasks file for wb
+- name: install packages
+  become: yes
+  package:
+    name: "{{ wb_pckgs }}"
+    state: present
+    
+- include: nvm.yml
+
+- include: app.yml
+
+- include: nodejs.yml

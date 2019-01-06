@@ -1,0 +1,16 @@
+- name: "Ensure directory exists for git repo"
+  file:
+    path: "{{ app.git.dest }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+
+- name: Get updated files from git repository
+  git:
+    repo: "{{ app.git.repo }}"
+    dest: "{{ app.git.dest }}"
+    depth: "{{ app.git.depth | default(omit) }}"
+    version: "{{ app.git.version | default(omit) }}"
+    force: "{{ app.git.force | default(omit) }}"
+  notify: restart app

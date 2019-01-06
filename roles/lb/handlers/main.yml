@@ -1,0 +1,47 @@
+---
+# handlers file for lb
+- name: restart haproxy
+  service:
+    name: haproxy
+    state: restarted
+
+- name: save haproxy service state
+  command: systemctl status haproxy
+  ignore_errors: yes
+  changed_when: false
+  register: service_haproxy_status
+  listen: reload haproxy
+
+- name: report haproxy service state
+  debug:
+    msg: |
+      Service haproxy is not running.
+      Output of `systemctl status haproxy`:
+      {{ service_haproxy_status.stdout }}
+      {{ service_haproxy_status.stderr }}
+  when: service_haproxy_status is failed
+  listen: reload haproxy
+
+- name: reload haproxy when service is already running
+  when: service_haproxy_status is succeeded
+  service:
+    name: haproxy
+    state: reloaded
+  listen: reload haproxy
+
+- name: restart keepalived
+  service:
+    name: keepalived
+    state: restarted
+
+- name: reload keepalived
+  service:
+    name: keepalived
+    state: reloaded
+
+- name: reload nginx
+  delegate_to: "{{ item }}"
+  with_items: "{{groups['le-nginx']}}"
+  service:
+    name: nginx
+    state: reloaded

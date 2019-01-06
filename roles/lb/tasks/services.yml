@@ -1,0 +1,27 @@
+- name: reload haproxy
+  debug:
+    msg: reload haproxy if haproxy_reload is true
+  when: haproxy_reload
+  changed_when: true
+  notify: reload haproxy
+
+- name: restart haproxy
+  debug:
+    msg: restart haproxy if postgres_haproxy is true
+  when: haproxy_restart
+  changed_when: true
+  notify: restart haproxy
+
+- name: reload keepalived
+  debug:
+    msg: reload keepalived if keepalived_reload is true
+  when: keepalived_reload
+  changed_when: true
+  notify: reload keepalived
+
+- name: restart keepalived
+  debug:
+    msg: restart keepalived if keepalived_haproxy is true
+  when: keepalived_restart
+  changed_when: true
+  notify: restart keepalived

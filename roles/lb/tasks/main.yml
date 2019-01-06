@@ -1,0 +1,8 @@
+---
+# tasks file for lb
+- include: haproxy.yml
+
+- include: keepalived.yml
+  when: install_keepalived
+
+- include: haproxy_conf.yml

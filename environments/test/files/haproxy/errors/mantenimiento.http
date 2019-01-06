@@ -1,0 +1,23 @@
+HTTP/1.0 503 Service Unavailable
+Cache-Control: no-cache
+Connection: close
+Content-Type: text/html
+
+<html>
+<head>
+<title>En mantenimiento</title>
+<style type="text/css">
+<!--
+img {
+	width: 1100px;
+	max-width: 100%;
+	display: block;
+	margin: 0 auto;
+}
+-->
+</style>
+</head>
+<body>
+	<a href="http://portafoliovirtual.ucr.ac.cr/"><img src="http://portafoliovirtual.ucr.ac.cr/images/NuevaMedicionVirtual/avisos/mantenimiento-01.png" alt="En mantenimiento. Regresamos pronto"></a>
+</body>
+</html>

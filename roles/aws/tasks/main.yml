@@ -1,0 +1,14 @@
+---
+# tasks file for aws
+
+- include: key.yml
+
+- include: iam.yml
+
+- include: net.yml
+
+- include: rds.yml
+
+- include: ec2.yml
+
+- include: public_eip.yml

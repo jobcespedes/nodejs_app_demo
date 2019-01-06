@@ -1,0 +1,24 @@
+- name: create IAM role with custom trust relationship
+  with_items: "{{ aws_iam }}"
+  iam:
+    aws_access_key: "{{ item.aws_access_key if item.aws_access_key is defined else ( aws_access_key  | default(omit)) }}"
+    aws_secret_key: "{{ item.aws_secret_key if item.aws_secret_key is defined else ( aws_secret_key  | default(omit)) }}"
+    region: "{{ item.region if item.region is defined else ( aws_region  | default(omit)) }}"
+    iam_type: "{{ item.iam_type | default(omit) }}"
+    name: "{{ item.name | default(omit) }}"
+    state: "{{ item.state | default(omit) }}"
+    trust_policy: "{{ item.trust_policy | default(omit) }}"
+
+- name: create IAM policy
+  with_items: "{{ aws_iam }}"
+  when: item.policy is defined
+  iam_policy:
+    aws_access_key: "{{ item.aws_access_key if item.aws_access_key is defined else ( aws_access_key  | default(omit)) }}"
+    aws_secret_key: "{{ item.aws_secret_key if item.aws_secret_key is defined else ( aws_secret_key  | default(omit)) }}"
+    region: "{{ item.region if item.region is defined else ( aws_region  | default(omit)) }}"
+    iam_type: "{{ item.policy.iam_type | default(omit) }}"
+    iam_name: "{{ item.policy.iam_name | default(omit) }}"
+    policy_name: "{{ item.policy.policy_name | default(omit) }}"
+    state: "{{ item.policy.state | default(omit) }}"
+    policy_document: "{{ item.policy.policy_document | default(omit) }}"
+    policy_json: "{{ item.policy.policy_json | default(omit) }}"

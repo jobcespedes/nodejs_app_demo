@@ -1,0 +1,39 @@
+# Built VMs
+- name: provision VMs
+  hosts: localhost
+  tags: build
+  tasks:
+    - name: Build VMs in AWS public cloud
+      import_role:
+        name: aws
+
+# Config lb
+- name: Config LB
+  hosts: lb
+  become: yes
+  tags:
+    - lb
+    - config
+  tasks:
+    - name: Manage public EIP
+      become: no
+      delegate_to: localhost
+      import_role:
+        name: aws
+        tasks_from: public_eip
+
+    - name: Config LB layer
+      import_role:
+        name: lb
+
+# Config wb
+- name: Config wb
+  hosts: wb
+  become: yes
+  tags:
+    - wb
+    - config
+  tasks:
+    - name: Config WB layer
+      import_role:
+        name: wb

@@ -1,0 +1,35 @@
+# {{ ansible_managed }}
+! Configuration File for keepalived
+
+global_defs {
+@main   router_id {{ keepalived_main_router }}
+@backup router_id {{ keepalived_backup_router }}
+    enable_script_security
+}
+
+vrrp_script chk_haproxy {
+    script "/usr/bin/pgrep haproxy"
+    interval 2                      # check every 2 seconds
+}
+
+vrrp_instance VI_1 {
+    interface {{ keepalived_interface }}              # interface to monitor
+    virtual_router_id 51
+@main priority {{ keepalived_main_priority }}            # 100 on master
+@backup priority {{ keepalived_backup_priority }}            # 99 on backup
+    dont_track_primary              # REVIEW: DHCP renewal triggers failover. http://serverfault.com/q/601670/314760
+    authentication {
+        auth_type PASS
+        auth_pass {{ keepalived_auth_pass }}
+    }
+@main unicast_src_ip {{ keepalived_main_unicast_src_ip }}
+@backup unicast_src_ip {{ keepalived_backup_unicast_src_ip }}
+    unicast_peer {
+        {{ keepalived_unicast_peer }}
+    }
+    track_script {
+        chk_haproxy weight 2
+    }
+    notify /etc/keepalived/notify-haproxy.sh
+    notify_master /etc/keepalived/notify-master.sh {{ aws_public_eip }}
+}

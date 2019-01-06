@@ -1,0 +1,27 @@
+- name: stop app
+  debug:
+    msg: stop app wb_stop_app is true
+  when: app_stop
+  changed_when: true
+  notify: stop app
+
+- name: start app
+  debug:
+    msg: start app wb_start_app is true
+  when: app_start
+  changed_when: true
+  notify: start app
+
+- name: restart app
+  debug:
+    msg: restart app wb_restart_app is true
+  when: app_restart
+  changed_when: true
+  notify: restart app
+
+- name: update app
+  debug:
+    msg: update app wb_update_app is true
+  when: app_update
+  changed_when: true
+  notify: update app
