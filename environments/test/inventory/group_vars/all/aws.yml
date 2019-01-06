@@ -100,6 +100,7 @@ aws_rds_subnet_group: "rds_{{ app_name }}_sng"
 aws_rds:
   command: create
   instance_name: "{{ db_name }}"
+  db_name: "{{ db_name }}"
   db_engine: MySQL
   size: 10
   instance_type: db.t2.micro

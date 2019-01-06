@@ -1,7 +1,7 @@
 ---
 # handlers file for wb
 - name: stop app
-  shell: "pm2 stop {{ app.name }}"
+  shell: "NODE_ENV={{ env }} pm2 stop {{ app.name }}"
   args:
     chdir: "{{ app.git.dest }}"
   ignore_errors: yes
@@ -11,14 +11,14 @@
     - update app
 
 - name: update app
-  shell: "npm run-script db-update"
+  shell: "NODE_ENV={{ env }} npm run-script db-update"
   args:
     chdir: "{{ app.git.dest }}"
   listen:
     - update app
 
 - name: start app
-  shell: "pm2 start npm --name {{ app.name }} -- start"
+  shell: "NODE_ENV={{ env }} pm2 start npm --name {{ app.name }} -- start"
   args:
     chdir: "{{ app.git.dest }}"
   listen:

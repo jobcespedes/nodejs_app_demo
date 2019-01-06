@@ -22,7 +22,7 @@ app:
     repo: https://github.com/jobcespedes/application.git
     dest: /var/www/html/demo
     depth: 1
-    version: master
+    version: test
     force: yes
 
 app_stop: false
