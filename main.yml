@@ -15,7 +15,7 @@
     - lb
     - config
   tasks:
-    - name: Manage public EIP
+    - name: check public EIP
       become: no
       delegate_to: localhost
       import_role:
@@ -34,6 +34,16 @@
     - wb
     - config
   tasks:
+    - name: check rds endpoint
+      become: no
+      delegate_to: localhost
+      when: aws_rds_endpoint is not defined
+      import_role:
+        name: aws
+        tasks_from: rds
+
     - name: Config WB layer
+      vars:
+        app_restart: true
       import_role:
         name: wb

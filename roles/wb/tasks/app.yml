@@ -6,11 +6,12 @@
     group: "{{ ansible_user }}"
     mode: 0755
 
-- name: Get updated files from git repository
+- name: Check git repository for updates
   git:
     repo: "{{ app.git.repo }}"
     dest: "{{ app.git.dest }}"
     depth: "{{ app.git.depth | default(omit) }}"
     version: "{{ app.git.version | default(omit) }}"
     force: "{{ app.git.force | default(omit) }}"
+  check_mode: yes
   notify: restart app

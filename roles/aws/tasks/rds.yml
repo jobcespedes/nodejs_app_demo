@@ -1,68 +1,83 @@
-- name: get subnets ids
-  when: vpc_subnet_ids is not defined
+- name: create rds
+  when: aws_rds_endpoint is not defined
   block:
-  - name: Subnets facts
-    when: aws_subnets is defined
-    ec2_vpc_subnet_facts:
+  - name: check rds
+    rds_instance_facts:
+      aws_access_key: "{{ aws_access_key  | default(omit) }}"
+      aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
+      region: "{{ aws_region | default(omit) }}"
+      db_instance_identifier: "{{ aws_rds.instance_name }}"
+    register: aws_rds_instance_facts
+
+  - when: aws_rds_instance_facts.instances | length
+    set_fact:
+      aws_rds_endpoint: "{{ aws_rds_instance_facts.instances | map(attribute='endpoint.address') | first }}"
+
+  - name: get subnets ids
+    when: vpc_subnet_ids is not defined
+    block:
+    - name: Subnets facts
+      when: aws_subnets is defined
+      ec2_vpc_subnet_facts:
+        aws_access_key: "{{ aws_access_key  | default(omit) }}"
+        aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
+        region: "{{ aws_vpc_nets | map(attribute='region') | first | default(aws_region) }}"
+      register: ec2_subnets_facts
+
+    - name: Save subnets ids
+      with_items: "{{ ec2_subnets_facts.subnets }}"
+      when: item.tags.Name is defined
+      set_fact:
+        ec2_vpc_subnet_ids: "{{ ec2_vpc_subnet_ids | default({}) | combine( { item.tags.Name: item.id } ) }}"
+      no_log: true
+
+    - set_fact:
+        vpc_subnet_ids: "{{ ec2_vpc_subnet_ids }}"
+      no_log: true
+
+  - with_items: "{{ aws_rds_subnets }}"
+    set_fact:
+      rds_group_subnet_ids: "{{ rds_group_subnet_ids | default([]) + [vpc_subnet_ids[item]] }}"
+    no_log: true
+
+  - name: VPC security groups facts
+    when: aws_rds.vpc_security_group_name is defined
+    ec2_group_facts:
       aws_access_key: "{{ aws_access_key  | default(omit) }}"
       aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
       region: "{{ aws_vpc_nets | map(attribute='region') | first | default(aws_region) }}"
-    register: ec2_subnets_facts
+      filters:
+        "group_name": "{{ aws_rds.vpc_security_group_name }}"
+    register: ec2_group_db_facts
 
-  - name: Save subnets ids
-    with_items: "{{ ec2_subnets_facts.subnets }}"
-    when: item.tags.Name is defined
+  - when: ec2_group_db_facts is defined
     set_fact:
-      ec2_vpc_subnet_ids: "{{ ec2_vpc_subnet_ids | default({}) | combine( { item.tags.Name: item.id } ) }}"
-    no_log: true
+      ec2_group_db_id: "{{ ec2_group_db_facts.security_groups | map(attribute='group_id') | first }}"
 
-  - set_fact:
-      vpc_subnet_ids: "{{ ec2_vpc_subnet_ids }}"
-    no_log: true
+  - name: create subnet group
+    rds_subnet_group:
+      aws_access_key: "{{ aws_access_key  | default(omit) }}"
+      aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
+      region: "{{ aws_vpc_nets | map(attribute='region') | first | default(aws_region) }}"
+      state: present
+      name: "{{ aws_rds_subnet_group }}"
+      description: "RDS Subnet Group for {{ app_name }}"
+      subnets: "{{ rds_group_subnet_ids }}"
 
-- with_items: "{{ aws_rds_subnets }}"
-  set_fact:
-    rds_group_subnet_ids: "{{ rds_group_subnet_ids | default([]) + [vpc_subnet_ids[item]] }}"
-  no_log: true
-
-- name: VPC security groups facts
-  when: aws_rds.vpc_security_group_name is defined
-  ec2_group_facts:
-    aws_access_key: "{{ aws_access_key  | default(omit) }}"
-    aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
-    region: "{{ aws_vpc_nets | map(attribute='region') | first | default(aws_region) }}"
-    filters:
-      "group_name": "{{ aws_rds.vpc_security_group_name }}"
-  register: ec2_group_db_facts
-
-- when: ec2_group_db_facts is defined
-  set_fact:
-    ec2_group_db_id: "{{ ec2_group_db_facts.security_groups | map(attribute='group_id') | first }}"
-
-- name: create subnet group
-  rds_subnet_group:
-    aws_access_key: "{{ aws_access_key  | default(omit) }}"
-    aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
-    region: "{{ aws_vpc_nets | map(attribute='region') | first | default(aws_region) }}"
-    state: present
-    name: "{{ aws_rds_subnet_group }}"
-    description: "RDS Subnet Group for {{ app_name }}"
-    subnets: "{{ rds_group_subnet_ids }}"
-
-- name: create rds
-  rds:
-    aws_access_key: "{{ aws_access_key  | default(omit) }}"
-    aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
-    region: "{{ aws_region | default(omit) }}"
-    command: "{{ aws_rds.command | default(omit) }}"
-    instance_name: "{{ aws_rds.instance_name | default(omit) }}"
-    db_engine: "{{ aws_rds.db_engine | default(omit) }}"
-    size: "{{ aws_rds.size | default(omit) }}"
-    instance_type: "{{ aws_rds.instance_type | default(omit) }}"
-    username: "{{ aws_rds.username | default(omit) }}"
-    password: "{{ aws_rds.password | default(omit) }}"
-    tags: "{{ aws_rds.tags | default(omit) }}"
-    multi_zone: "{{ aws_rds.multi_zone | default(omit) }}"
-    wait: "{{ aws_rds.wait | default(omit) }}"
-    vpc_security_groups: "{{ ec2_group_db_id if ec2_group_db_id is defined else ( aws_rds.vpc_security_groups | default(omit)) }}"
-    subnet: "{{ aws_rds_subnet_group }}"
+  - name: create rds
+    rds:
+      aws_access_key: "{{ aws_access_key  | default(omit) }}"
+      aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
+      region: "{{ aws_region | default(omit) }}"
+      command: "{{ aws_rds.command | default(omit) }}"
+      instance_name: "{{ aws_rds.instance_name | default(omit) }}"
+      db_engine: "{{ aws_rds.db_engine | default(omit) }}"
+      size: "{{ aws_rds.size | default(omit) }}"
+      instance_type: "{{ aws_rds.instance_type | default(omit) }}"
+      username: "{{ aws_rds.username | default(omit) }}"
+      password: "{{ aws_rds.password | default(omit) }}"
+      tags: "{{ aws_rds.tags | default(omit) }}"
+      multi_zone: "{{ aws_rds.multi_zone | default(omit) }}"
+      wait: "{{ aws_rds.wait | default(omit) }}"
+      vpc_security_groups: "{{ ec2_group_db_id if ec2_group_db_id is defined else ( aws_rds.vpc_security_groups | default(omit)) }}"
+      subnet: "{{ aws_rds_subnet_group }}"

@@ -10,6 +10,48 @@
     - restart app
     - update app
 
+- name: Get updated files from git repository
+  git:
+    repo: "{{ app.git.repo }}"
+    dest: "{{ app.git.dest }}"
+    depth: "{{ app.git.depth | default(omit) }}"
+    version: "{{ app.git.version | default(omit) }}"
+    force: "{{ app.git.force | default(omit) }}"
+  listen:
+    - start app
+    - restart app
+    - update app
+
+- name : configure database connection
+  when: app_db_config_src is defined and aws_rds_endpoint is defined 
+  template:
+    src: "{{ app_db_config_src }}"
+    dest: "{{ app_db_config_path }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0644
+  listen:
+    - start app
+    - restart app
+    - update app
+
+- name: install packages based on package.json
+  npm:
+    path: "{{ app.git.dest }}"
+  listen:
+    - start app
+    - restart app
+    - update app
+
+- name: install mysql
+  npm:
+    name: mysql
+    path: "{{ app.git.dest }}"
+  listen:
+    - start app
+    - restart app
+    - update app
+
 - name: update app
   shell: "NODE_ENV={{ env }} npm run-script db-update"
   args:

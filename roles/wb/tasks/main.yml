@@ -5,9 +5,11 @@
   package:
     name: "{{ wb_pckgs }}"
     state: present
-    
+
 - include: nvm.yml
 
 - include: app.yml
 
 - include: nodejs.yml
+
+- include: services.yml

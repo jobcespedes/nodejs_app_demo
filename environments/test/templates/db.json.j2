@@ -5,11 +5,11 @@
     "logging": false
   },
   "test": {
-    "username": "user",
-    "password": "password",
-    "database": "demo-db",
-    "host": "demo-db.chqb6uzvdyeb.us-west-2.rds.amazonaws.com",
-    "dialect": "mysql"
+    "username": "{{ db_user }}",
+    "password": "{{ db_pass }}",
+    "database": "{{ db_name }}",
+    "host": "{{ aws_rds_endpoint }}",
+    "dialect": "{{ db_dialect }}"
   },
   "production": {
     "username": "root",

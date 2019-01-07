@@ -25,6 +25,8 @@ app:
     version: test
     force: yes
 
+app_db_config_path: "{{ app.git.dest }}/config/db.json"
+
 app_stop: false
 app_start: false
 app_update: false

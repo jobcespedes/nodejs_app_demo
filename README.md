@@ -33,11 +33,17 @@ Simple structure:
 
 **environments**
 
-This folder is for working with different environments. It contains contextual data for each one.
+This folder is for working with different environments. It contains contextual data for each one. For example: inventory, files, documentation, templates.
 
 **roles**
 
-This folder contains ansible roles
+This folder contains ansible roles: aws, lb, wb
 
 ## Playbooks
-```main.yml``` is the main playbook. Configure AWS resources like IAM, EC2, VPC, RDS. Then each layer is configure.
+```main.yml``` is the main playbook. Configure AWS resources like IAM, EC2, VPC, RDS. Then each layer is configured.
+
+# ssh
+For connection via ssh, set variable ```instance_ip``` and:
+
+```bash
+ssh -i environments/test/.artifacts/.ssh/id_rsa admin@${instance_ip}```

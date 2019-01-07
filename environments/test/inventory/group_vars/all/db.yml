@@ -1,1 +1,5 @@
 db_name: demo-db
+db_user: "{{ users.mysql.name }}"
+db_pass: "{{ users.mysql.pass }}"
+# aws_rds_endpoint: "{{ demo-db.chqb6uzvdyeb.us-west-2.rds.amazonaws.com }}"
+db_dialect: "mysql"

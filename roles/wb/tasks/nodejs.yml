@@ -4,18 +4,3 @@
     global: yes
     production: yes
     state: present
-
-- name: install packages based on package.json
-  npm:
-    path: "{{ app.git.dest }}"
-  environment:
-    NODE_ENV: "{{ env }}"
-  notify: restart app
-
-- name: install mysql
-  npm:
-    name: mysql
-    path: "{{ app.git.dest }}"
-  environment:
-    NODE_ENV: "{{ env }}"
-  notify: restart app
