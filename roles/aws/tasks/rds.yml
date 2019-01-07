@@ -1,12 +1,12 @@
 - name: create rds
-  when: aws_rds_endpoint is not defined
+  when: aws_rds_force_creation is defined or (aws_rds_endpoint is not defined and aws_rds_dbs is defined)
   block:
   - name: check rds
     rds_instance_facts:
       aws_access_key: "{{ aws_access_key  | default(omit) }}"
       aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
       region: "{{ aws_region | default(omit) }}"
-      db_instance_identifier: "{{ aws_rds.instance_name }}"
+      db_instance_identifier: "{{ aws_rds_db_name }}"
     register: aws_rds_instance_facts
 
   - when: aws_rds_instance_facts.instances | length
@@ -41,13 +41,13 @@
     no_log: true
 
   - name: VPC security groups facts
-    when: aws_rds.vpc_security_group_name is defined
+    when: aws_rds_vpc_security_group_name is defined
     ec2_group_facts:
       aws_access_key: "{{ aws_access_key  | default(omit) }}"
       aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
       region: "{{ aws_vpc_nets | map(attribute='region') | first | default(aws_region) }}"
       filters:
-        "group_name": "{{ aws_rds.vpc_security_group_name }}"
+        "group_name": "{{ aws_rds_vpc_security_group_name }}"
     register: ec2_group_db_facts
 
   - when: ec2_group_db_facts is defined
@@ -65,19 +65,22 @@
       subnets: "{{ rds_group_subnet_ids }}"
 
   - name: create rds
+    with_items: "{{ aws_rds_dbs }}"
     rds:
       aws_access_key: "{{ aws_access_key  | default(omit) }}"
       aws_secret_key: "{{ aws_secret_key  | default(omit) }}"
       region: "{{ aws_region | default(omit) }}"
-      command: "{{ aws_rds.command | default(omit) }}"
-      instance_name: "{{ aws_rds.instance_name | default(omit) }}"
-      db_engine: "{{ aws_rds.db_engine | default(omit) }}"
-      size: "{{ aws_rds.size | default(omit) }}"
-      instance_type: "{{ aws_rds.instance_type | default(omit) }}"
-      username: "{{ aws_rds.username | default(omit) }}"
-      password: "{{ aws_rds.password | default(omit) }}"
-      tags: "{{ aws_rds.tags | default(omit) }}"
-      multi_zone: "{{ aws_rds.multi_zone | default(omit) }}"
-      wait: "{{ aws_rds.wait | default(omit) }}"
-      vpc_security_groups: "{{ ec2_group_db_id if ec2_group_db_id is defined else ( aws_rds.vpc_security_groups | default(omit)) }}"
-      subnet: "{{ aws_rds_subnet_group }}"
+      command: "{{ item.command | default(omit) }}"
+      instance_name: "{{ item.instance_name }}"
+      db_engine: "{{ item.db_engine | default(omit) }}"
+      size: "{{ item.size | default(omit) }}"
+      instance_type: "{{ item.instance_type | default(omit) }}"
+      username: "{{ item.username | default(omit) }}"
+      password: "{{ item.password | default(omit) }}"
+      tags: "{{ item.tags | default(omit) }}"
+      multi_zone: "{{ item.multi_zone | default(omit) }}"
+      wait: "{{ item.wait | default(omit) }}"
+      wait_timeout: "{{ item.wait_timeout | default(omit) }}"
+      vpc_security_groups: "{{ ec2_group_db_id if ec2_group_db_id is defined and item.command != 'replicate' else ( item.vpc_security_groups | default(omit)) }}"
+      source_instance: "{{ item.source_instance | default(omit) }}"
+      subnet: "{{ aws_rds_subnet_group if item.command != 'replicate' else omit }}"

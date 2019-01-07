@@ -97,20 +97,30 @@ aws_rds_subnets:
 
 aws_rds_subnet_group: "rds_{{ app_name }}_sng"
 
-aws_rds:
-  command: create
-  instance_name: "{{ db_name }}"
-  db_name: "{{ db_name }}"
-  db_engine: MySQL
-  size: 10
-  instance_type: db.t2.micro
-  username: "{{ users.mysql.name }}"
-  password: "{{ users.mysql.pass }}"
-  multi_zone: yes
-  vpc_security_group_name: db
-  tags:
-    Environment: "{{ env }}"
-    Application: "{{ app_name }}"
+aws_rds_db_name: "{{ db_name }}"
+aws_rds_vpc_security_group_name: db
+
+aws_rds_dbs:
+  - command: create
+    instance_name: "{{ aws_rds_db_name }}"
+    db_name: "{{ db_name }}"
+    db_engine: MySQL
+    size: 10
+    instance_type: db.t2.micro
+    username: "{{ users.mysql.name }}"
+    password: "{{ users.mysql.pass }}"
+    multi_zone: yes
+    vpc_security_group_name: "{{ aws_rds_vpc_security_group_name }}"
+    wait: yes
+    wait_timeout: 600
+    tags:
+      Environment: "{{ env }}"
+      Application: "{{ app_name }}"
+  - command: replicate
+    instance_name: "{{ db_name }}-replicate"
+    source_instance : "{{ db_name }}"
+    wait: yes
+    wait_timeout: 600
 
 aws_eip_role_name: aws_eip_role
 
