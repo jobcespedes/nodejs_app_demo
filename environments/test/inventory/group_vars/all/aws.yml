@@ -116,11 +116,6 @@ aws_rds_dbs:
     tags:
       Environment: "{{ env }}"
       Application: "{{ app_name }}"
-  - command: replicate
-    instance_name: "{{ db_name }}-replicate"
-    source_instance : "{{ db_name }}"
-    wait: yes
-    wait_timeout: 600
 
 aws_eip_role_name: aws_eip_role
 
