@@ -18,43 +18,45 @@ Visit [live demo site](https://demo-app.yamipa.com)
 * Scalability
     * Layers: resources are placed in three main layers: wb, lb, db
 
-# Requeriments
+## Requeriments
 1. Ansible >= 1.5
 2. AWS credentials configure in Ansible Host
 
-# Quickstart
+## Quickstart
 ``` bash
 ansible-playbook -i environments/test/inventory/ main.yml
 ```
 
-# Ansible
+### Ansible
+
 Simple structure:
 
     ├── environments/
     └── roles/
 
-**environments**
 
-This folder is for working with different environments. It contains contextual data for each one. For example: inventory, files, documentation, templates.
+* **environments** This folder is for working with different environments. It contains contextual data for each one. For example: inventory, files, documentation, templates.
 
-**roles**
+* **roles** This folder contains ansible roles: aws, lb, wb
 
-This folder contains ansible roles: aws, lb, wb
 
-## Playbooks
-```main.yml``` is the main playbook. Configure AWS resources like IAM, EC2, VPC, RDS. Then each layer is configured.
-```letsencrypt.yml``` creates or renew certificates.
-```
-# ssh
+#### Playbooks
+
+* ```main.yml``` is the main playbook. It configures everything, from AWS resources like IAM, EC2, VPC, RDS to packages and customization in each layer.
+
+* ```letsencrypt.yml``` creates or renew certificates.
+
+### Remote connection
 For connection via ssh, set variable ```instance_ip``` and:
 
 ```bash
 ssh -i environments/test/.artifacts/.ssh/id_rsa admin@${instance_ip}
 ```
 
-# Letsencrypt
-Just set ```le_domain```. For example
+### Letsencrypt
+> It can handle creation, renewal, certificate placement and haproxy reload in both balancers
+
+Just set ```le_domain``` and run letsencrypt playbook. For example:
 ``` bash
 ansible-playbook -i environments/test/inventory/ letsencrypt.yml -e le_domain="demo-app.yamipa.com"
 ```
-It will handle creation, renewal, certificate placement and haproxy reload in both balancers
