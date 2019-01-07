@@ -54,9 +54,9 @@ ssh -i environments/test/.artifacts/.ssh/id_rsa admin@${instance_ip}
 ```
 
 ### Letsencrypt
-> It can handle creation, renewal, certificate placement and haproxy reload in both balancers
-
-Just set ```le_domain``` and run letsencrypt playbook. For example:
+> There should be already configured a DNS record to the elastic public IP.
+>
+It handles creation, renewal, certificate placement and haproxy reload in both balancers. Just set ```le_domain``` and run letsencrypt playbook. For example:
 ``` bash
 ansible-playbook -i environments/test/inventory/ letsencrypt.yml -e le_domain="demo-app.yamipa.com"
 ```
