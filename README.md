@@ -4,6 +4,8 @@
 ![MYSQL](https://img.shields.io/badge/MYSQL5-6-blue.svg?colorB=E97B00)
 [![Software License](https://img.shields.io/badge/License-APACHE-black.svg?style=flat-square&colorB=585ac2)](LICENSE)
 
+Visit [live demo site](https://demo-app.yamipa.com)
+
 ![Architecture diagram](environments/test/doc/img/diagram.png)
 
 # Overview
@@ -41,10 +43,18 @@ This folder contains ansible roles: aws, lb, wb
 
 ## Playbooks
 ```main.yml``` is the main playbook. Configure AWS resources like IAM, EC2, VPC, RDS. Then each layer is configured.
-
+```letsencrypt.yml``` creates or renew certificates.
+```
 # ssh
 For connection via ssh, set variable ```instance_ip``` and:
 
 ```bash
 ssh -i environments/test/.artifacts/.ssh/id_rsa admin@${instance_ip}
 ```
+
+# Letsencrypt
+Just set ```le_domain```. For example
+``` bash
+ansible-playbook -i environments/test/inventory/ letsencrypt.yml -e le_domain="demo-app.yamipa.com"
+```
+It will handle creation, renewal, certificate placement and haproxy reload in both balancers

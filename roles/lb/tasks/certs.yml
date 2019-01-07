@@ -1,0 +1,12 @@
+- name: "ensure pem folder exists"
+  file:
+    path: "/etc/letsencrypt/live/{{ domain }}"
+    state: directory
+
+- name: save domain pem
+  copy:
+    content: "{{ domain_pem.stdout }}"
+    dest: "/etc/letsencrypt/live/{{ domain }}/{{ domain }}.pem"
+  register: save_domain_pem
+  notify:
+    - reload haproxy

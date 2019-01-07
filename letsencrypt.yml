@@ -1,0 +1,13 @@
+# Built VMs
+- name: letsencrypt certs
+  hosts: lb
+  tags: letsencrypt
+  become: yes
+  vars:
+    certbot_run: true
+  tasks:
+    - name: Create or renew letsencrypt certs
+      when: le_domain is defined
+      include_role:
+        name: lb
+        tasks_from: letsencrypt

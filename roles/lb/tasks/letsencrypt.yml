@@ -1,0 +1,26 @@
+# Requiere que cerbot esté instalado
+- name: "run cerbot to issue or renew certs in 'le_certs' variable"
+  include_tasks: certbot.yml
+  # delegate_to: letsencrypt
+  when: le_certs is defined and certbot_run
+  with_items: "{{ le_certs }}"
+  vars:
+    ansible_become: true
+    command: "{{ item.command | default(certbot_command) }}"
+    multidomain: "{{ item.multidomain | default(certbot_multidomain) }}"
+    domain: "{{ item.domain | default(certbot_domain) }}"
+    email: "{{ item.email | default(certbot_email) }}"
+    http_01_port: "{{ item.http_01_port | default(certbot_http_01_port) }}"
+    test_cert: "{{ item.test_cert | default(certbot_test_cert) }}"
+    dry_run: "{{ item.dry_run | default(certbot_dry_run) }}"
+    force_renewal: "{{ item.force_renewal | default(certbot_force_renewal) }}"
+    preferred_challenge: "{{ item.preferred_challenge|default(certbot_preferred_challenge) }}"
+
+- name: Copy issued or renew certs
+  include: copy_certs.yml
+  when: le_certs is defined and copy_domain_pem
+  with_items: "{{ le_certs }}"
+  vars:
+    ansible_become: true
+    domain: "{{ item.domain | default(certbot_domain) }}"
+    copy_cert_for_nginx: "{{ item.copy_cert_for_nginx | default(certbot_copy_cert_for_nginx) }}"

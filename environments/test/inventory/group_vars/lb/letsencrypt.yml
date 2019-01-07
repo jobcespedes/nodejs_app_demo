@@ -1,0 +1,5 @@
+# le cert options
+le_domain: "demo-app.yamipa.com"
+
+le_certs:
+  - domain: "{{ le_domain }}"

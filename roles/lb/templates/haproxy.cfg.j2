@@ -49,14 +49,22 @@ frontend http
     default_backend app
 
 frontend https
-    bind :443 ssl crt /etc/ssl/certs/haproxy.pem
+    bind :443 ssl {{ 'crt /etc/letsencrypt/live/' + le_domain + '/' + le_domain + '.pem' if le_domain is defined else '' }} crt /etc/ssl/certs/haproxy.pem
     reqadd X-Forwarded-Proto:\ https
+
+    # Letsencrypt
+    acl letsencrypt-acl path_beg /.well-known/acme-challenge/
+    use_backend letsencrypt-backend if letsencrypt-acl
+
     default_backend app
+
+backend letsencrypt-backend
+    server letsencrypt 127.0.0.1:54321
 
 backend app
     redirect scheme https if !{ ssl_fc }
     balance roundrobin
     option log-health-checks
 {% for host in groups.wb %}
-    server {{ host }} {{ hostvars[host]['ec2_private_ip_address'] }}:{{ hostvars[host]['haproxy_server_port'] if hostvars[host]['haproxy_server_port'] is defined else '80' }} {{ "backup" if hostvars[host]['haproxy_server_backup'] is defined else '' }} {{ "disabled" if hostvars[host]['haproxy_server_disabled'] is defined else '' }}
+    server {{ host }} {{ hostvars[host]['ec2_private_ip_address'] }}:{{ hostvars[host]['haproxy_server_port'] if hostvars[host]['haproxy_server_port'] is defined else '80' }} check inter 20s maxconn 30 {{ "backup" if hostvars[host]['haproxy_server_backup'] is defined else '' }} {{ "disabled" if hostvars[host]['haproxy_server_disabled'] is defined else '' }}
 {% endfor %}

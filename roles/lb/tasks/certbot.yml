@@ -1,0 +1,60 @@
+- name: install certbot
+  package:
+    name: certbot
+    state: present
+
+- when: preferred_challenge == "http"
+  set_fact:
+    cert_command: >
+      {{ command }} certonly --standalone -d {{ (multidomain|join(' -d ')) if multidomain else ( '$(ec2metadata --public-hostname)' if not domain else domain ) }} --non-interactive --agree-tos -m {{ email }} --http-01-port {{ http_01_port }} --preferred-challenges http --cert-name {{ '$(ec2metadata --public-hostname)' if not domain else domain }} {{ ' --test-cert' if test_cert else '' }} {{ ' --dry-run' if dry_run else '' }} {{ ' --force-renewal' if force_renewal else '' }}
+
+- when: preferred_challenge == "dns"
+  set_fact:
+    cert_command: >
+      {{ command }} certonly --manual
+      --cert-name {{ domain }}
+      -d {{ (multidomain|join(' -d ')) if multidomain else ( domain | default('ec2metadata --public-hostname')) }}
+      --server https://acme-v02.api.letsencrypt.org/directory
+      --preferred-challenge=dns
+      --keep-until-expiring --expand
+      --non-interactive --agree-tos
+      --email {{ email|d() }}
+      {{ ' --test-cert' if test_cert else '' }} {{ ' --dry-run' if dry_run else '' }} {{ ' --force-renewal' if force_renewal else '' }}
+      --manual-public-ip-logging-ok
+      --manual-auth-hook 'certbot-dns-hook.sh auth'
+      --manual-cleanup-hook 'certbot-dns-hook.sh cleanup'
+
+- debug:
+    msg: "{{ cert_command }}"
+
+- name: run certbot
+  shell: "{{ cert_command }}"
+  ignore_errors: yes
+  changed_when: false
+  register: certbot_output
+  run_once: True
+  delegate_to: lb-master
+
+- name: save output
+  debug:
+    msg: |
+      Output of `certbot`:
+      {{ certbot_output.stdout }}
+      {{ certbot_output.stderr }}
+  when: certbot_output.stdout is defined and certbot_output is failed
+  run_once: True
+
+- when: certbot_output.stdout is defined and certbot_output is failed
+  fail:
+    msg: "Falló!"
+
+- name: save domain pem for later
+  when: certbot_output.stdout is defined and certbot_output is success and certbot_output.stdout is defined and certbot_output.stdout.find('no action taken') == -1
+  command: "cat /etc/letsencrypt/live/{{ domain }}/fullchain.pem /etc/letsencrypt/live/{{ domain }}/privkey.pem"
+  register: domain_pem
+  run_once: True
+  delegate_to: lb-master
+
+- name: copy issued or renew certs
+  include: certs.yml
+  when: domain_pem.stdout is defined

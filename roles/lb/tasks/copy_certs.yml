@@ -1,0 +1,8 @@
+- name: Copiar domain pem
+  command: "cat /etc/letsencrypt/live/{{ domain }}/fullchain.pem /etc/letsencrypt/live/{{ domain }}/privkey.pem"
+  register: domain_pem
+  run_once: True
+  delegate_to: lb-master
+
+- include: certs.yml
+  when: domain_pem.stdout is defined

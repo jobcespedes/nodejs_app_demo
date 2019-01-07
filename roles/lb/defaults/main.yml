@@ -32,3 +32,22 @@ keepalived_backup_priority: 99
 # keepalived_main_unicast_peer: false
 # keepalived_backup_unicast_peer: false
 # keepalived_virtual_ipaddress: false
+
+## letsencrypt
+### run letsencrypt tasks
+certbot_run: false
+copy_domain_pem: false
+### letsencrypt (le) options
+certbot_command: certbot
+certbot_multidomain: false
+certbot_domain: false
+certbot_email: jobcespedes@gmail.com
+certbot_http_01_port: 54321
+certbot_test_cert: false
+certbot_dry_run: false
+certbot_force_renewal: false
+certbot_copy_cert_for_nginx: false
+certbot_preferred_challenge: http
+le_domain: false
+le_certs:
+  - domain: "{{ le_domain }}"
