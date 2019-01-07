@@ -46,4 +46,5 @@ This folder contains ansible roles: aws, lb, wb
 For connection via ssh, set variable ```instance_ip``` and:
 
 ```bash
-ssh -i environments/test/.artifacts/.ssh/id_rsa admin@${instance_ip}```
+ssh -i environments/test/.artifacts/.ssh/id_rsa admin@${instance_ip}
+```
